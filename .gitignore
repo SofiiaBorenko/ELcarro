@@ -219,7 +219,7 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 # Personal project files
-confing.py
+config.py
 
 # PyCharm
 .idea/
