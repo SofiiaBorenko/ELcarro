@@ -4,6 +4,8 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 
+from logging_config import logger
+
 
 class BasePage:
 
@@ -15,33 +17,51 @@ class BasePage:
             WebDriverWait(self.driver, timeout).until(
                 EC.visibility_of_element_located(locator)
             )
+            logger.debug("Element is visible: %s", locator)
             return True
         except TimeoutException:
+            logger.warning("Element is not visible: %s", locator)
             return False
 
     def click_element(self, locator, timeout=10):
-        element = WebDriverWait(self.driver, timeout).until(
-            EC.element_to_be_clickable(locator)
-        )
-        element.click()
+        try:
+            element = WebDriverWait(self.driver, timeout).until(
+                EC.element_to_be_clickable(locator)
+            )
+            element.click()
+            logger.info("Clicked element: %s", locator)
+        except Exception:
+            logger.exception("Failed to click element: %s", locator)
+            raise
 
     def input_text(self, locator, text, timeout=10):
-        element = WebDriverWait(self.driver, timeout).until(
-            EC.visibility_of_element_located(locator)
-        )
-        element.click()
-        element.clear()
+        try:
+            element = WebDriverWait(self.driver, timeout).until(
+                EC.visibility_of_element_located(locator)
+            )
+            element.click()
+            element.clear()
 
-        if text:
-            element.send_keys(text)
+            if text:
+                element.send_keys(text)
 
-        element.send_keys(Keys.TAB)
+            element.send_keys(Keys.TAB)
+            logger.debug("Entered text into element: %s", locator)
+        except Exception:
+            logger.exception("Failed to enter text into element: %s", locator)
+            raise
 
     def get_element_text(self, locator, timeout=10):
-        element = WebDriverWait(self.driver, timeout).until(
-            EC.visibility_of_element_located(locator)
-        )
-        return element.text
+        try:
+            element = WebDriverWait(self.driver, timeout).until(
+                EC.visibility_of_element_located(locator)
+            )
+            text = element.text
+            logger.debug("Got text from element: %s", locator)
+            return text
+        except Exception:
+            logger.exception("Failed to get text from element: %s", locator)
+            raise
 
     def is_element_disabled(self, locator, timeout=10):
         try:
@@ -50,4 +70,5 @@ class BasePage:
             )
             return not element.is_enabled()
         except TimeoutException:
+            logger.warning("Element was not found: %s", locator)
             return False

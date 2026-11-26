@@ -1,8 +1,10 @@
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 
 from Pages.base_page import BasePage
+from logging_config import logger
 
 
 class LoginPage(BasePage):
@@ -25,33 +27,42 @@ class LoginPage(BasePage):
     )
 
     def open_login_page(self):
+        logger.info("Opening login page")
         self.driver.get(self.URL)
 
     def login(self, email, password):
+        logger.info("Attempting login")
         self.input_text(self.EMAIL_FIELD, email)
         self.input_text(self.PASSWORD_FIELD, password)
         self.click_element(self.SUBMIT_BUTTON)
 
     def confirm_successful_login(self):
-        self.wait = self.driver
-
-        from selenium.webdriver.support.ui import WebDriverWait
+        logger.info("Confirming successful login")
 
         wait = WebDriverWait(self.driver, 15)
 
-        wait.until(
-            EC.visibility_of_element_located(self.SUCCESS_DIALOG)
-        )
+        try:
+            wait.until(
+                EC.visibility_of_element_located(self.SUCCESS_DIALOG)
+            )
 
-        ok_button = wait.until(
-            EC.element_to_be_clickable(self.SUCCESS_OK)
-        )
+            ok_button = wait.until(
+                EC.element_to_be_clickable(self.SUCCESS_OK)
+            )
 
-        self.driver.execute_script(
-            "arguments[0].click();", ok_button
-        )
+            self.driver.execute_script(
+                "arguments[0].click();", ok_button
+            )
 
-        wait.until(EC.url_contains("/search"))
+            wait.until(EC.url_contains("/search"))
+            logger.info("Login completed successfully")
+
+        except Exception:
+            logger.exception("Successful login confirmation failed")
+            raise
 
     def is_login_error_displayed(self):
-        return self.is_element_visible(self.ERROR_MESSAGE)
+        result = self.is_element_visible(self.ERROR_MESSAGE)
+        if result:
+            logger.warning("Login error message is displayed")
+        return result
